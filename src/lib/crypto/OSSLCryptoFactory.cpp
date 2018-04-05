@@ -138,6 +138,25 @@ OSSLCryptoFactory::OSSLCryptoFactory()
 	// Initialise OpenSSL
 	OpenSSL_add_all_algorithms();
 
+	// Make sure RDRAND is loaded first
+	ENGINE_load_rdrand();
+	// Locate loaded RDRAND engine
+	rdrand_engine = ENGINE_by_id("rdrand");
+	if ( rdrand_engine == NULL ) {
+		fprintf(stderr, "ENGINE_load_rdrand returned %lu\n", ERR_get_error());
+	}
+	// Initialize RDRAND engine
+	if ( ! ENGINE_init(rdrand_engine) ) {
+		fprintf(stderr, "ENGINE_init returned %lu\n", ERR_get_error());
+	}
+	// Set RDRAND engine as default for RAND_ - this is necessary for
+	// pkcs11 engines that also provide random number generators.
+	// Without this SoftHSMv2 goes into infinite recursion trying to
+	// get random numbers from an engine that's being initialized.
+	if ( ! ENGINE_set_default(rdrand_engine, ENGINE_METHOD_RAND) ) {
+		fprintf(stderr, "ENGINE_set_default returned %lu\n", ERR_get_error());
+	}
+
 	// Initialise the one-and-only RNG
 	rng = new OSSLRNG();
 
