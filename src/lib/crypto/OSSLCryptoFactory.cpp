@@ -143,7 +143,7 @@ OSSLCryptoFactory::OSSLCryptoFactory()
 
 	// Make sure RDRAND is loaded first
 	ENGINE_load_rdrand();
-	// Locate the engine
+	// Locate loaded RDRAND engine
 	rdrand_engine = ENGINE_by_id("rdrand");
 	// Use RDRAND if available
 	if (rdrand_engine != NULL)
