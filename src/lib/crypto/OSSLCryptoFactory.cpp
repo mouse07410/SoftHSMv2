@@ -145,19 +145,22 @@ OSSLCryptoFactory::OSSLCryptoFactory()
 	ENGINE_load_rdrand();
 	// Locate loaded RDRAND engine
 	rdrand_engine = ENGINE_by_id("rdrand");
-	if ( rdrand_engine == NULL ) {
-		fprintf(stderr, "ENGINE_load_rdrand returned %lu\n", ERR_get_error());
-	}
-	// Initialize RDRAND engine
-	if ( ! ENGINE_init(rdrand_engine) ) {
-		fprintf(stderr, "ENGINE_init returned %lu\n", ERR_get_error());
-	}
-	// Set RDRAND engine as default for RAND_ - this is necessary for
-	// pkcs11 engines that also provide random number generators.
-	// Without this SoftHSMv2 goes into infinite recursion trying to
-	// get random numbers from an engine that's being initialized.
-	if ( ! ENGINE_set_default(rdrand_engine, ENGINE_METHOD_RAND) ) {
-		fprintf(stderr, "ENGINE_set_default returned %lu\n", ERR_get_error());
+	// Use RDRAND if available
+	if (rdrand_engine != NULL)
+	{
+		// Initialize RDRAND engine
+		if (!ENGINE_init(rdrand_engine))
+		{
+			WARNING_MSG("ENGINE_init returned %lu\n", ERR_get_error());
+		}
+		// Set RDRAND engine as default for RAND_ - this is necessary for
+		// pkcs11 engines that also provide random number generators.
+		// Without this SoftHSMv2 goes into infinite recursion trying to
+		// get random numbers from an engine that's being initialized.
+		else if (!ENGINE_set_default(rdrand_engine, ENGINE_METHOD_RAND))
+		{
+			WARNING_MSG("ENGINE_set_default returned %lu\n", ERR_get_error());
+		}
 	}
 
 	// Initialise the one-and-only RNG
@@ -169,6 +172,10 @@ OSSLCryptoFactory::OSSLCryptoFactory()
 	ENGINE_load_builtin_engines();
 #else
 	OPENSSL_init_crypto(OPENSSL_INIT_ENGINE_ALL_BUILTIN |
+			    OPENSSL_INIT_ENGINE_RDRAND |
+			    OPENSSL_INIT_LOAD_CRYPTO_STRINGS |
+			    OPENSSL_INIT_ADD_ALL_CIPHERS |
+			    OPENSSL_INIT_ADD_ALL_DIGESTS |
 			    OPENSSL_INIT_LOAD_CONFIG, NULL);
 #endif
 
