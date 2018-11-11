@@ -141,8 +141,10 @@ OSSLCryptoFactory::OSSLCryptoFactory()
 	// Initialise OpenSSL
 	OpenSSL_add_all_algorithms();
 
+#if !( OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER) )
 	// Make sure RDRAND is loaded first
 	ENGINE_load_rdrand();
+#endif
 	// Locate loaded RDRAND engine
 	rdrand_engine = ENGINE_by_id("rdrand");
 	// Use RDRAND if available
@@ -177,7 +179,7 @@ OSSLCryptoFactory::OSSLCryptoFactory()
 			    OPENSSL_INIT_ADD_ALL_CIPHERS |
 			    OPENSSL_INIT_ADD_ALL_DIGESTS |
 			    OPENSSL_INIT_LOAD_CONFIG, NULL);
-#endif
+#endif /* OPENSSL_VERSION_NUMBER */
 
 	// Initialise the GOST engine
 	eg = ENGINE_by_id("gost");
@@ -221,7 +223,7 @@ err:
 	ENGINE_free(eg);
 	eg = NULL;
 	return;
-#endif
+#endif /* WITH_GOST */
 }
 
 // Destructor
