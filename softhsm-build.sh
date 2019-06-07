@@ -3,9 +3,11 @@
 #DEBUG="-g"
 
 make distclean
-bash ./augogen.sh
+bash ./autogen.sh
 
-./configure --prefix=/opt/local -enable-64bit --with-openssl=/opt/local --with-botan=/opt/local --with-sqlite3 --disable-eddsa CC=clang CPPUNIT_CFLAGS="-I/opt/local/include" CFLAGS="-maes -mpclmul -mrdrnd -mrdseed -msse2 -mssse3 -msse4.1 -msse4.2 -mavx2 -mtune=native -Os -Ofast ${DEBUG}" LDFLAGS="${DEBUG} -L/opt/local/lib" CPPFLAGS="-I/opt/local/include" CXX=clang++ CXXFLAGS="-maes -mpclmul -mrdrnd -mrdseed -msse2 -mssse3 -msse4.1 -msse4.2 -mavx2 -mtune=native -Os -Ofast -std=gnu++17 ${DEBUG}"
+#./configure --prefix=/opt/local -enable-64bit --with-openssl=/opt/local --with-botan=/opt/local --with-sqlite3 --disable-eddsa CC=clang CPPUNIT_CFLAGS="-I/opt/local/include" CFLAGS="-maes -mpclmul -mrdrnd -mrdseed -msse2 -mssse3 -msse4.1 -msse4.2 -mavx2 -mtune=native -Os -Ofast ${DEBUG}" LDFLAGS="${DEBUG} -L/opt/local/lib" CPPFLAGS="-I/opt/local/include" CXX=clang++ CXXFLAGS="-maes -mpclmul -mrdrnd -mrdseed -msse2 -mssse3 -msse4.1 -msse4.2 -mavx2 -mtune=native -Os -Ofast -std=gnu++17 ${DEBUG}"
+
+./configure --prefix=/opt/local -enable-64bit --with-openssl=/opt/local --enable-eddsa --with-sqlite3 CC=clang CPPUNIT_CFLAGS="-I/opt/local/include" CFLAGS="-maes -mpclmul -mrdrnd -mrdseed -msse2 -mssse3 -msse4.1 -msse4.2 -mavx2 -mtune=native -Os -Ofast ${DEBUG}" LDFLAGS="${DEBUG} -L/opt/local/lib" CPPFLAGS="-I/opt/local/include" CXX=clang++ CXXFLAGS="-maes -mpclmul -mrdrnd -mrdseed -msse2 -mssse3 -msse4.1 -msse4.2 -mavx2 -mtune=native -Os -Ofast -std=gnu++17 ${DEBUG}"
 
 # Make sure configuration succeeded
 if [ $? != 0 ]; then
