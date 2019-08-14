@@ -340,8 +340,10 @@ CK_RV P11Attribute::retrieve(Token *token, bool isPrivate, CK_VOID_PTR pValue, C
 					ERROR_MSG("Internal error: failed to decrypt private attribute value");
 					return CKR_GENERAL_ERROR;
 				}
-				const unsigned char* attrPtr = value.const_byte_str();
-				memcpy(pValue,attrPtr,attrSize);
+				if (value.size() !=  0) {
+					const unsigned char* attrPtr = value.const_byte_str();
+					memcpy(pValue,attrPtr,attrSize);
+				}
 			}
 			else if (attr.getByteStringValue().size() != 0)
 			{
@@ -356,7 +358,7 @@ CK_RV P11Attribute::retrieve(Token *token, bool isPrivate, CK_VOID_PTR pValue, C
 
 			std::set<CK_MECHANISM_TYPE> set = attr.getMechanismTypeSetValue();
 			for (std::set<CK_MECHANISM_TYPE>::const_iterator it = set.begin(); it != set.end(); ++it)
-				pTemplate[++i] = *it;
+				pTemplate[i++] = *it;
 		}
 		else
 		{
