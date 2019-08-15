@@ -233,8 +233,10 @@ OSSLCryptoFactory::~OSSLCryptoFactory()
 	// Finish the GOST engine
 	if (eg != NULL)
 	{
+#if 0
 		ENGINE_finish(eg);
 		ENGINE_free(eg);
+#endif /* as per @mtrojnar */
 		eg = NULL;
 	}
 #endif
