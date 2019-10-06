@@ -1842,6 +1842,7 @@ CK_RV SoftHSM::C_SetAttributeValue(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE 
 CK_RV SoftHSM::C_FindObjectsInit(CK_SESSION_HANDLE hSession, CK_ATTRIBUTE_PTR pTemplate, CK_ULONG ulCount)
 {
 	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
+	if (pTemplate == NULL_PTR && ulCount != 0) return CKR_ARGUMENTS_BAD;
 
 	// Get the session
 	Session* session = (Session*)handleManager->getSession(hSession);
@@ -5669,6 +5670,7 @@ CK_RV SoftHSM::C_GenerateKey(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMecha
 	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
 
 	if (pMechanism == NULL_PTR) return CKR_ARGUMENTS_BAD;
+	if (pTemplate == NULL_PTR && ulCount != 0) return CKR_ARGUMENTS_BAD;
 	if (phKey == NULL_PTR) return CKR_ARGUMENTS_BAD;
 
 	// Get the session
@@ -5820,6 +5822,8 @@ CK_RV SoftHSM::C_GenerateKeyPair
 	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
 
 	if (pMechanism == NULL_PTR) return CKR_ARGUMENTS_BAD;
+	if (pPublicKeyTemplate == NULL_PTR && ulPublicKeyAttributeCount != 0) return CKR_ARGUMENTS_BAD;
+	if (pPrivateKeyTemplate == NULL_PTR && ulPrivateKeyAttributeCount != 0) return CKR_ARGUMENTS_BAD;
 	if (phPublicKey == NULL_PTR) return CKR_ARGUMENTS_BAD;
 	if (phPrivateKey == NULL_PTR) return CKR_ARGUMENTS_BAD;
 
@@ -7069,9 +7073,17 @@ CK_RV SoftHSM::C_CancelFunction(CK_SESSION_HANDLE hSession)
 }
 
 // Wait or poll for a slot event on the specified slot
-CK_RV SoftHSM::C_WaitForSlotEvent(CK_FLAGS /*flags*/, CK_SLOT_ID_PTR /*pSlot*/, CK_VOID_PTR /*pReserved*/)
+CK_RV SoftHSM::C_WaitForSlotEvent(CK_FLAGS flags, CK_SLOT_ID_PTR /*pSlot*/, CK_VOID_PTR /*pReserved*/)
 {
-	return CKR_FUNCTION_NOT_SUPPORTED;
+	if (!(flags & CKF_DONT_BLOCK)) return CKR_FUNCTION_NOT_SUPPORTED;
+
+	if (!isInitialised) return CKR_CRYPTOKI_NOT_INITIALIZED;
+
+	// SoftHSM slots don't change after it's initialised. With the
+	// exception of when a slot is initialised and then getSlotList() is
+	// called. However, at this point the caller has been updated with the
+	// new slot list already so no event needs to be triggered.
+	return CKR_NO_EVENT;
 }
 
 CK_RV SoftHSM::generateGeneric
