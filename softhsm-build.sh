@@ -2,10 +2,27 @@
 
 #DEBUG="-g"
 
-make distclean
+make distclean || true
 bash ./autogen.sh
 
-./configure --prefix=/opt/local -enable-64bit --with-openssl=/opt/local --with-botan=/opt/local --with-sqlite3 --enable-eddsa CC=clang CPPUNIT_CFLAGS="-I/opt/local/include" CFLAGS="-march=native -Os -Ofast -std=gnu11 ${DEBUG}" LDFLAGS="${DEBUG} -L/opt/local/lib" CPPFLAGS="-I/opt/local/include" CXX=clang++ CXXFLAGS="-march=native -Os -Ofast -std=gnu++17 ${DEBUG}"
+if [ -z "$OPENSSL_DIR" ]; then
+    OPENSSL_DIR="/opt/local"
+fi
+PPATH="$OPENSSL_DIR"
+
+PKG_CONFIG_PATH="$OPENSSL_DIR/lib/pkgconfig:$PKG_CONFIG_PATH"
+OPENSSL_CONF="$OPENSSL_DIR/etc/openssl.cnf"
+
+./configure --prefix=$PPATH -enable-64bit \
+    --with-openssl=$PPATH --with-botan=/opt/local --with-sqlite3 \
+    --enable-eddsa \
+    CC=clang \
+    CXX=clang++ \
+    CPPUNIT_CFLAGS="-I${PPATH}/include -I/opt/local/include" \
+    CFLAGS="-march=native -Os -Ofast -std=gnu11 ${DEBUG}" \
+    LDFLAGS="${DEBUG} -L${PPATH}/lib -L/opt/local/lib" \
+    CPPFLAGS="-I${PPATH}/include -I/opt/local/include" \
+    CXXFLAGS="-march=native -I${PPATH}/include -Os -Ofast -std=gnu++17 ${DEBUG}"
 
 # Make sure configuration succeeded
 if [ $? != 0 ]; then
