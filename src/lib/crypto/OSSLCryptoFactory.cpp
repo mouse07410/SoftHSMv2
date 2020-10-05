@@ -229,33 +229,58 @@ err:
 // Destructor
 OSSLCryptoFactory::~OSSLCryptoFactory()
 {
-#ifdef WITH_GOST
-	// Finish the GOST engine
-	if (eg != NULL)
+	bool ossl_shutdown = false;
+
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L && !defined(LIBRESSL_VERSION_NUMBER)
+	// OpenSSL 1.1.0+ will register an atexit() handler to run
+	// OPENSSL_cleanup(). If that has already happened we must
+	// not attempt to free any ENGINEs because they'll already
+	// have been destroyed and the use-after-free would cause
+	// a deadlock or crash.
+	//
+	// Detect that situation because reinitialisation will fail
+	// after OPENSSL_cleanup() has run.
+	(void)ERR_set_mark();
+	ossl_shutdown = !OPENSSL_init_crypto(OPENSSL_INIT_ENGINE_RDRAND, NULL);
+	(void)ERR_pop_to_mark();
+#endif
+	if (!ossl_shutdown)
 	{
-#if 0
-		ENGINE_finish(eg);
-		ENGINE_free(eg);
-#endif /* as per @mtrojnar */
-		eg = NULL;
-	}
+//#if 0
+//		ENGINE_finish(eg);
+//		ENGINE_free(eg);
+//#endif /* as per @mtrojnar */
+//		eg = NULL;
+//	}
+//=======
+#ifdef WITH_GOST
+		// Finish the GOST engine
+		if (eg != NULL)
+		{
+//#if 0
+			ENGINE_finish(eg);
+			ENGINE_free(eg);
+//#endif /* as per @mtrojnar */
+			eg = NULL;
+		}
 #endif
 
-	// Finish the rd_rand engine
-	ENGINE_finish(rdrand_engine);
-	ENGINE_free(rdrand_engine);
-	rdrand_engine = NULL;
+		// Finish the rd_rand engine
+		ENGINE_finish(rdrand_engine);
+		ENGINE_free(rdrand_engine);
+		rdrand_engine = NULL;
 
+		// Recycle locks
+#if OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
+		if (setLockingCallback)
+		{
+			CRYPTO_set_locking_callback(NULL);
+		}
+#endif
+	}
 	// Destroy the one-and-only RNG
 	delete rng;
 
-	// Recycle locks
-#if OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
-	if (setLockingCallback)
-	{
-		CRYPTO_set_locking_callback(NULL);
-	}
-#endif
 	for (unsigned i = 0; i < nlocks; i++)
 	{
 		MutexFactory::i()->recycleMutex(locks[i]);

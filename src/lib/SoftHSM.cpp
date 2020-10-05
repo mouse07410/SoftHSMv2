@@ -1080,6 +1080,7 @@ CK_RV SoftHSM::C_GetMechanismInfo(CK_SLOT_ID slotID, CK_MECHANISM_TYPE type, CK_
 #endif
 		case CKM_DES3_CBC:
 			pInfo->flags = CKF_WRAP;
+			// falls through
 		case CKM_DES3_ECB:
 		case CKM_DES3_CBC_PAD:
 			// Key size is not in use
@@ -1100,6 +1101,7 @@ CK_RV SoftHSM::C_GetMechanismInfo(CK_SLOT_ID slotID, CK_MECHANISM_TYPE type, CK_
 			break;
 		case CKM_AES_CBC:
 			pInfo->flags = CKF_WRAP;
+			// falls through
 		case CKM_AES_ECB:
 		case CKM_AES_CBC_PAD:
 		case CKM_AES_CTR:
@@ -12004,10 +12006,10 @@ ByteString SoftHSM::getECDHPubData(ByteString& pubData)
 {
 	size_t len = pubData.size();
 	size_t controlOctets = 2;
-	if (len == 32 || len == 65 || len == 97 || len == 133)
+	if (len == 32 || len == 56 || len == 65 || len == 97 || len == 133)
 	{
 		// Raw: Length matches the public key size of:
-		// EDDSA: X25519
+		// EDDSA: X25519, X448
 		// ECDSA: P-256, P-384, or P-521
 		controlOctets = 0;
 	}
